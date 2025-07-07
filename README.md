@@ -64,9 +64,19 @@ Compile the source code:
 
     idf.py build
 
-Alternatively, if you are using the provided Makefile (common for simpler setups or specific Windows PowerShell scenarios):
+
+Alternatively, if you are using the provided Makefile (now located at the root of the repository and shared by all projects):
 
     make
+
+**Important:**
+
+- Before running any `make` command, you must edit the `Makefile` and set the following variables at the top of the file:
+    - `PROJECT_DIR` — Set this to the absolute path of the project you want to build (e.g., `D:/baris/personal/personal_projects/ESP32/my_projects/blink`).
+    - `PORT` — Set this to the serial port your ESP32 is connected to (e.g., `COM4`).
+    - `IDF_PATH` — Set this to your ESP-IDF installation path (e.g., `C:/Users/youruser/esp/esp-idf`).
+
+The Makefile requires absolute paths and cannot automatically detect your project or ESP-IDF installation directory. Each user must update these variables to match their own system.
 
 ### Flash the Project to ESP32:
 Once built, flash the firmware to your ESP32 board. Ensure your ESP32 is connected and the correct serial port is selected (either in menuconfig or as PORT in your Makefile).
