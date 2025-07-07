@@ -8,11 +8,22 @@ To build and flash these projects onto your ESP32, you'll need to set up your de
 
 ## Prerequisites
 
-###    ESP-IDF (Espressif IoT Development Framework):
 
-Follow the official Espressif installation guide for your operating system. This typically involves installing Git, CMake, Python, and the ESP-IDF tools.
+###    ESP-IDF (Espressif IoT Development Framework) and Required Tools:
 
-ESP-IDF Programming Guide - Get Started
+Follow the official Espressif installation guide for your operating system. This will install all required tools, including:
+
+- **Git**: For cloning the repository and managing versions.
+- **CMake**: Build system used by ESP-IDF.
+- **Ninja**: Fast build tool used by ESP-IDF (required for building projects).
+- **Python**: Essential for ESP-IDF scripts and build system.
+- **GCC Toolchain**: Cross-compiler for ESP32 (e.g., xtensa-esp32-elf-gcc).
+- **Serial Port Driver**: Ensure you have the correct drivers for your ESP32 board's USB-to-serial chip (e.g., CP210x, FTDI).
+
+> **Tip:** The ESP-IDF installer (Windows) or the `install.sh`/`install.bat` scripts (Linux/macOS/Windows) will automatically install CMake, Ninja, Python, and the GCC toolchain for you. You do not need to install these separately unless you want to use your own versions.
+
+**Official ESP-IDF Programming Guide:**
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/
 
 ###    Required Software/Tools:
 
