@@ -51,11 +51,12 @@ Choose the project you want to work on. For example, if you have a blink project
 
     cd blink
 
+
 ### Set up ESP-IDF Environment Variables:
 Before building, you need to set up the ESP-IDF environment variables. This is typically done by sourcing the export.sh (Linux/macOS) or export.ps1 (Windows PowerShell) script located in your ESP-IDF installation directory.
 
 Linux/macOS:
-    
+
     . $IDF_PATH/export.sh
 
 Windows (PowerShell):
@@ -63,6 +64,8 @@ Windows (PowerShell):
     . $env:IDF_PATH/export.ps1
 
 (Replace $IDF_PATH with your actual ESP-IDF installation path if it's not already set as an environment variable.)
+
+Alternatively, if you are using the provided Makefile, the environment variables will be set up automatically for you when you run any `make` command (such as `make build`, `make flash`, etc.).
 
 ### Configure the Project (Optional but Recommended):
 You can configure project-specific settings (like serial port, Wi-Fi credentials, etc.) using menuconfig:
