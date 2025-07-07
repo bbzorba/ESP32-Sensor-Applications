@@ -1,7 +1,7 @@
 # Makefile for ESP-IDF project for PowerShell on Windows (V2)
 
 # Use forward slashes for paths.
-PROJECT_DIR     := D:/baris/personal/personal_projects/ESP32/my_projects/blink
+PROJECT_DIR     := D:/baris/personal/personal_projects/ESP32/my_projects/read_bme688
 IDF_PATH        := C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
 
 # Default serial port.
