@@ -21,16 +21,16 @@ jobs:
           python-version: '3.8'
 
       - name: Build hc05_bluetooth project
-        working-directory: ./hc05_bluetooth
         run: |
+          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/hc05_bluetooth|' Makefile
           make build
 
       - name: Patch CMakeLists.txt for button_LED
-        working-directory: ./button_LED/main
         run: |
+          cd button_LED/main
           echo 'idf_component_register(SRCS "'$(ls *.cpp | tr '\n' '" "')'INCLUDE_DIRS ".")' > CMakeLists.txt
 
       - name: Build button_LED project
-        working-directory: ./button_LED
         run: |
+          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/button_LED|' Makefile
           make build
