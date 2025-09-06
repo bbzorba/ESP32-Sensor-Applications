@@ -1,10 +1,10 @@
 # ESP32 Embedded Projects
 
-This repository is a collection of the main source codes for various embedded projects developed using the ESP-IDF framework for the ESP32 WROOM 32 module. Each subdirectory within this repository will contain a self-contained ESP-IDF project.
+This repository is a collection of various embedded projects developed using the ESP-IDF framework for the ESP32 WROOM 32 module. Each subdirectory within this repository will contain a self-contained ESP-IDF project.
 
 ## Getting Started
 
-To build and flash these projects onto your ESP32, you'll need to set up your development environment.
+To build and flash these projects onto your ESP32 without pulling the repository from this git repository, you'll need to set up your development environment.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ Serial Port Driver: Ensure you have the correct drivers for your ESP32 board's U
 ## Setting up a Project
 
 
-Each project in this repository includes only the source code (main source files and components) for ESP-IDF projects. You should **not clone this repository directly as a project**. Instead, follow these steps to create your own ESP-IDF project and use the provided source code:
+Each project in this repository includes the source code suitable for ESP-IDF projects. If you want to create your own ESP-IDF project, you should follow these steps:
 
 ### How to Create a New ESP-IDF Project in Visual Studio Code
 
@@ -56,8 +56,8 @@ Each project in this repository includes only the source code (main source files
     - The wizard will generate the project structure for you.
 
 
-3. **Copy Source Code:**
-    - Copy the relevant source files (e.g., `led_blink.cpp`, `read_bme688.cpp`) and any required `components` folders from this repository into the `main` directory (or appropriate location) of your new ESP-IDF project.
+3. **Write your Own Code / Copy the Source Code:**
+    - Copy the relevant source files (e.g., `led_blink.cpp`, `read_bme688.cpp`) and any required `components` folders from this repository into the `main` directory (or appropriate location) of your new ESP-IDF project, if needed.
     - If your project uses custom components, copy the entire `components` directory and update your project's `CMakeLists.txt` as needed.
 
 4. **Update CMakeLists.txt:**
@@ -86,7 +86,6 @@ Once configured, you can run commands like:
 
 This Makefile is a convenient wrapper for PowerShell users on Windows, but you can always use the standard `idf.py` commands directly if you prefer.
 **Note:**
-- Do not clone this repository as a full ESP-IDF project. Only copy the source code and components you need into your own ESP-IDF project structure.
 
 
 

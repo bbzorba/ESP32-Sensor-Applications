@@ -1,0 +1,14 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPathWin": "c:\\Users\\Xigmatek\\esp\\esp-idf",
+  "idf.pythonInstallPath": "C:\\Users\\Xigmatek\\.espressif\\tools\\idf-python\\3.8.7\\python.exe",
+  "idf.openOcdConfigs": [
+    "interface/ftdi/esp32_devkitj_v1.cfg",
+    "target/esp32.cfg"
+  ],
+  "idf.portWin": "COM7",
+  "idf.toolsPathWin": "C:\\Users\\Xigmatek\\.espressif",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32"
+  }
+}
