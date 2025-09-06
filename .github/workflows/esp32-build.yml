@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v4.4.4
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,23 +20,17 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Set up ESP-IDF
-        uses: espressif/esp-idf-ci-action@v1
-        with:
-          esp_idf_version: v4.4.4
-
       - name: Build hc05_bluetooth project
+        working-directory: ./hc05_bluetooth
         run: |
-          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/hc05_bluetooth|' Makefile
-          cd hc05_bluetooth
           make build
 
-      - name: Patch CMakeLists.txt for button_LED and build
+      - name: Patch CMakeLists.txt for button_LED
+        working-directory: ./button_LED/main
         run: |
-          cd button_LED/main
-          # Add all .cpp files in main/ to CMakeLists.txt
           echo 'idf_component_register(SRCS "'$(ls *.cpp | tr '\n' '" "')'INCLUDE_DIRS ".")' > CMakeLists.txt
-          cd ../..
-          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/button_LED|' Makefile
-          cd button_LED
+
+      - name: Build button_LED project
+        working-directory: ./button_LED
+        run: |
           make build
