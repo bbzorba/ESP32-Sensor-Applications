@@ -26,6 +26,7 @@ jobs:
       - name: Build hc05_bluetooth project
         run: |
           sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/hc05_bluetooth|' Makefile
+          cd hc05_bluetooth
           make build
 
       - name: Patch CMakeLists.txt for button_LED and build
@@ -35,4 +36,5 @@ jobs:
           echo 'idf_component_register(SRCS "'$(ls *.cpp | tr '\n' '" "')'INCLUDE_DIRS ".")' > CMakeLists.txt
           cd ../..
           sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/button_LED|' Makefile
+          cd button_LED
           make build
