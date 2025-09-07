@@ -11,29 +11,23 @@ jobs:
     runs-on: [self-hosted, windows]
     defaults:
       run:
-        shell: cmd
+        shell: powershell
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF environment
+      - name: Setup ESP-IDF environment, build and flash
         run: |
-          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
-
-      - name: Build button_LED (local)
-        run: |
-          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          # Use `.` to source the script and keep environment variables in the same session
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          
+          # Change directory and run build/flash commands in the same session
           cd button_LED
           idf.py build
-
-      - name: Flash button_LED to ESP32 (local)
-        run: |
-          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
-          cd button_LED
+          
           idf.py -p COM7 flash --verbose
 
       - name: Verify firmware on ESP32
-        shell: powershell
         run: |
           cd button_LED
           $job = Start-Job { idf.py -p COM7 monitor }
