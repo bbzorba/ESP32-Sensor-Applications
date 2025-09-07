@@ -13,13 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-
       - name: Build hc05_bluetooth project
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: v4.4.4
           path: hc05_bluetooth
-
 
       - name: Patch CMakeLists.txt for button_LED
         run: |
@@ -33,3 +31,36 @@ jobs:
         with:
           esp_idf_version: v4.4.4
           path: button_LED
+
+  flash-local:
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build hc05_bluetooth (local)
+        run: |
+          cd hc05_bluetooth
+          idf.py build
+
+      - name: Flash hc05_bluetooth to ESP32 (local)
+        run: |
+          cd hc05_bluetooth
+          idf.py -p COM7 flash
+
+      - name: Patch CMakeLists.txt for button_LED (local)
+        run: |
+          cd button_LED/main
+          $srcs = (Get-ChildItem *.cpp | ForEach-Object { $_.Name }) -join '" "'
+          Set-Content CMakeLists.txt "idf_component_register(SRCS `"$srcs`" INCLUDE_DIRS `".`")"
+        shell: pwsh
+
+      - name: Build button_LED (local)
+        run: |
+          cd button_LED
+          idf.py build
+
+      - name: Flash button_LED to ESP32 (local)
+        run: |
+          cd button_LED
+          idf.py -p COM7 flash
