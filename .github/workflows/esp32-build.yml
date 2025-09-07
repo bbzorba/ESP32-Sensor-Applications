@@ -67,9 +67,10 @@ jobs:
 
       - name: Flash button_LED to ESP32 (local)
         run: |
+          call C:\Users\Xigmatek\esp\esp-idf\export.bat
           cd button_LED
           idf.py -p COM7 flash --verbose
-        shell: powershell
+        shell: cmd
 
       - name: Verify firmware on ESP32
         run: |
