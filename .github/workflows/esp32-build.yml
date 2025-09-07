@@ -13,29 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up ESP-IDF (installs Python and sets env vars)
-      - name: Set up ESP-IDF
+
+      - name: Build hc05_bluetooth project
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: v4.4.4
+          path: hc05_bluetooth
 
-      - name: Build hc05_bluetooth project
-        run: make build
-        env:
-          IDF_PATH: ${{ env.IDF_PATH }}
-          IDF_PYTHON: ${{ env.IDF_PYTHON }}
-          PROJECT_DIR: ${{ github.workspace }}/hc05_bluetooth
 
       - name: Patch CMakeLists.txt for button_LED
         run: |
-          cd button_LED\main
+          cd button_LED/main
           $srcs = (Get-ChildItem *.cpp | ForEach-Object { $_.Name }) -join '" "'
           Set-Content CMakeLists.txt "idf_component_register(SRCS `"$srcs`" INCLUDE_DIRS `".`")"
         shell: pwsh
 
       - name: Build button_LED project
-        run: make build
-        env:
-          IDF_PATH: ${{ env.IDF_PATH }}
-          IDF_PYTHON: ${{ env.IDF_PYTHON }}
-          PROJECT_DIR: ${{ github.workspace }}/button_LED
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v4.4.4
+          path: button_LED
