@@ -18,7 +18,6 @@ jobs:
 
       - name: Setup ESP-IDF environment
         run: |
-          call C:\Users\Xigmatek\esp\esp-idf\install.bat
           call C:\Users\Xigmatek\esp\esp-idf\export.ps1
 
       - name: Build button_LED (local)
