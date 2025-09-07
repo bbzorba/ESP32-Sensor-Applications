@@ -16,50 +16,66 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF environment, install Python deps, build and flash
+      - name: Setup ESP-IDF environment, build and flash
         run: |
-          # 1. Ensure ESP-IDF tools and Python environment are set up
-          #    The export.ps1 script should set IDF_PATH and add tools to PATH.
-          #    We use '.' to source it in the current session.
-          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          # Define paths as variables for clarity and easier modification
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $projectDir = "button_LED" # Assuming button_LED is at the root of the checkout
+          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
-          # 2. Explicitly install/update Python dependencies for ESP-IDF.
-          #    This is crucial to resolve `gevent` and other library issues.
-          #    Using the Python interpreter provided by IDF's tools is best.
-          #    Find the python executable that `idf.py` uses. It's often in
-          #    <IDF_PATH>\tools\<python_version>\python
-          #    If .esp-idf\export.ps1 sets up IDF_PYTHON_ENV_PATH, use that.
-          #    Otherwise, find the specific python.exe.
-          #    Let's assume export.ps1 sets IDF_PYTHON_ENV_PATH correctly.
-          if ($env:IDF_PYTHON_ENV_PATH) {
-              Write-Host "Using Python from: $env:IDF_PYTHON_ENV_PATH"
-              & $env:IDF_PYTHON_ENV_PATH python -m pip install --upgrade pip
-              & $env:IDF_PYTHON_ENV_PATH python -m pip install --upgrade setuptools wheel
-              & $env:IDF_PYTHON_ENV_PATH python -m pip install --upgrade -r $env:IDF_PATH/requirements.txt
-              # If your project has its own requirements, install them too
-              # & $env:IDF_PYTHON_ENV_PATH python -m pip install -r requirements.txt
-          } else {
-              Write-Host "IDF_PYTHON_ENV_PATH not set. Attempting to use system Python or PlatformIO's Python."
-              # Fallback: try to use the Python that idf.py might find.
-              # This is less reliable.
-              idf.py --version # This might show which python it's using
-              # If idf.py uses platformio's python:
-              # C:\Users\Xigmatek\.platformio\penv\Scripts\python.exe -m pip install --upgrade pip
-              # C:\Users\Xigmatek\.platformio\penv\Scripts\python.exe -m pip install --upgrade setuptools wheel
-              # C:\Users\Xigmatek\.platformio\penv\Scripts\python.exe -m pip install --upgrade -r $env:IDF_PATH/requirements.txt
-          }
-          
-          # 3. Navigate to your project directory and build
-          cd button_LED
-          idf.py build
+          # Source the export script to set up the environment
+          . "$idfPath\export.ps1"
 
-          # 4. Flash the project
-          idf.py -p COM7 flash --verbose
+          # Navigate to the project directory
+          Set-Location $projectDir
+
+          # Construct and execute the idf.py build and flash commands
+          # This uses the ESP-IDF's specified Python interpreter and idf.py script
+          # to ensure all dependencies are met.
+          & "$idfPython" "$idfPath\tools\idf.py" build
+          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash --verbose
 
       - name: Verify firmware on ESP32
         run: |
-          cd button_LED
-          $job = Start-Job { idf.py -p COM7 monitor }
-          Start-Sleep -Seconds 5
-          Stop-Job $job
-          Receive-Job $job
+          $projectDir = "button_LED"
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
+
+          # Ensure the monitor command runs in the correct environment
+          Set-Location $projectDir
+          
+          # Using Start-Job might be problematic across different shell contexts.
+          # A direct execution might be more reliable for the monitor.
+          # However, if you need to capture output, Start-Job is an option.
+          # If monitor itself fails, it might be an issue with the ESP-IDF installation or the project.
+          
+          # Attempting to run monitor directly for simplicity and better error reporting
+          # If this fails, you might need to adjust how monitor is handled in CI.
+          try {
+              Write-Host "Starting ESP32 monitor..."
+              $monitorProcess = Start-Process -FilePath $idfPython -ArgumentList "$idfPath\tools\idf.py -p COM7 monitor" -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
+              
+              # Wait for a short period to capture initial output, then stop
+              Start-Sleep -Seconds 5 
+              
+              # If the process is still running, attempt to stop it. This might not always work cleanly.
+              if ($monitorProcess.HasExited -eq $false) {
+                  Write-Host "Stopping ESP32 monitor..."
+                  $monitorProcess.CloseMainWindow() # Or $monitorProcess.Kill() if necessary
+                  $monitorProcess.WaitForExit(2000) # Wait a bit for it to exit
+              }
+              
+              if ($monitorProcess.HasExited -eq $false) {
+                  Write-Host "Monitor process did not exit cleanly. Attempting to kill."
+                  $monitorProcess.Kill()
+                  $monitorProcess.WaitForExit()
+              }
+              
+              Write-Host "Monitor output:"
+              Get-Content monitor_output.txt
+              Write-Host "Monitor error output:"
+              Get-Content monitor_error.txt
+
+          } catch {
+              Write-Error "An error occurred during monitor execution: $($_.Exception.Message)"
+          }
