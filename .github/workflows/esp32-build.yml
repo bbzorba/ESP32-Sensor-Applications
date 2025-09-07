@@ -13,48 +13,28 @@ jobs:
       run:
         shell: cmd
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Set up ESP-IDF
+        run: call C:\Users\Xigmatek\esp\esp-idf\export.bat
 
-      - name: Setup ESP-IDF environment
-        run: |
-          call C:\Users\Xigmatek\esp\esp-idf\install.bat
-          call C:\Users\Xigmatek\esp\esp-idf\export.bat
+      - name: Install ESP-IDF Python deps
+        run: pip install -r C:\Users\Xigmatek\esp\esp-idf\requirements.txt
 
-      - name: Build hc05_bluetooth (local)
+      - name: Build hc05_bluetooth
         run: |
           cd hc05_bluetooth
           idf.py build
 
-      - name: Flash hc05_bluetooth to ESP32 (local)
+      - name: Flash hc05_bluetooth to ESP32
         run: |
           cd hc05_bluetooth
           idf.py -p COM7 flash
 
-      - name: Patch CMakeLists.txt for button_LED (local)
-        shell: powershell
+      - name: Build button_LED
         run: |
-          cd button_LED/main
-          $srcs = (Get-ChildItem *.cpp | ForEach-Object { $_.Name }) -join '" "'
-          Set-Content CMakeLists.txt "idf_component_register(SRCS `"$srcs`" INCLUDE_DIRS `".`")"
-
-      - name: Build button_LED (local)
-        run: |
-          call C:\Users\Xigmatek\esp\esp-idf\export.bat
           cd button_LED
           idf.py build
 
-      - name: Flash button_LED to ESP32 (local)
-        run: |
-          call C:\Users\Xigmatek\esp\esp-idf\export.bat
-          cd button_LED
-          idf.py -p COM7 flash --verbose
-
-      - name: Verify firmware on ESP32
-        shell: powershell
+      - name: Flash button_LED to ESP32
         run: |
           cd button_LED
-          $job = Start-Job { idf.py -p COM7 monitor }
-          Start-Sleep -Seconds 5
-          Stop-Job $job
-          Receive-Job $job
+          idf.py -p COM7 flash
