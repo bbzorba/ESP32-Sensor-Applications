@@ -11,25 +11,42 @@ jobs:
     runs-on: [self-hosted, windows]
     defaults:
       run:
-        shell: powershell
+        shell: powershell # Keep powershell as default shell for consistency
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF environment, build and flash
+      - name: Setup ESP-IDF Environment and Install Dependencies
         run: |
-          # Use `.` to source the script and keep environment variables in the same session
+          # Set up the ESP-IDF environment. This also prepares the correct Python environment.
+          # The dot '.' sources the script in the current PowerShell session.
           . C:\Users\Xigmatek\esp\esp-idf\export.ps1
-          
-          # Change directory and run build/flash commands in the same session
+
+          # Verify and install Python dependencies using idf_tools.py
+          # This command ensures the necessary Python packages are installed in the ESP-IDF's virtual environment.
+          python C:\Users\Xigmatek\esp\esp-idf\tools\idf_tools.py install python-deps
+
+      - name: Build button_LED (local)
+        run: |
+          # Re-source export.ps1 to ensure environment is set for this step
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
           cd button_LED
           idf.py build
-          
+
+      - name: Flash button_LED to ESP32 (local)
+        run: |
+          # Re-source export.ps1 to ensure environment is set for this step
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          cd button_LED
           idf.py -p COM7 flash --verbose
 
       - name: Verify firmware on ESP32
         run: |
+          # No need to re-source export.ps1 here as the previous step already did it and the environment persists
           cd button_LED
+          # Start-Job can be problematic in some CI environments. If this fails, consider removing it
+          # and running monitor directly, though it might block the workflow.
+          # For simpler verification, you might just check the build output or remove this step.
           $job = Start-Job { idf.py -p COM7 monitor }
           Start-Sleep -Seconds 5
           Stop-Job $job
