@@ -13,26 +13,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # (Optional) Set up Python if your ESP-IDF needs it
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # Set up ESP-IDF (installs Python and sets env vars)
+      - name: Set up ESP-IDF
+        uses: espressif/esp-idf-ci-action@v1
         with:
-          python-version: '3.8'
+          esp_idf_version: v4.4.4
 
-      # Set PROJECT_DIR and build hc05_bluetooth
-      - name: Build hc05_bluetooth project
+      - name: Set environment variables for Makefile
         run: |
-          powershell -Command "(Get-Content Makefile) -replace '^(PROJECT_DIR.*)', 'PROJECT_DIR     ?= $(pwd)/hc05_bluetooth' | Set-Content Makefile"
-          make build
+          echo "IDF_PATH=$IDF_PATH" >> $GITHUB_ENV
+          echo "IDF_PYTHON=$IDF_PYTHON" >> $GITHUB_ENV
+          echo "PROJECT_DIR=${{ github.workspace }}/hc05_bluetooth" >> $GITHUB_ENV
+        shell: bash
 
-      # Patch CMakeLists.txt for button_LED
+      - name: Build hc05_bluetooth project
+        run: make build
+        env:
+          IDF_PATH: ${{ env.IDF_PATH }}
+          IDF_PYTHON: ${{ env.IDF_PYTHON }}
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+
       - name: Patch CMakeLists.txt for button_LED
         run: |
           cd button_LED\main
-          dir *.cpp /b | % { Write-Host $_ } | %{ 'idf_component_register(SRCS "' + ($_ -join '" "') + '" INCLUDE_DIRS ".")' } | Set-Content CMakeLists.txt
+          $srcs = (Get-ChildItem *.cpp | ForEach-Object { $_.Name }) -join '" "'
+          Set-Content CMakeLists.txt "idf_component_register(SRCS `"$srcs`" INCLUDE_DIRS `".`")"
+        shell: pwsh
 
-      # Set PROJECT_DIR and build button_LED
       - name: Build button_LED project
         run: |
-          powershell -Command "(Get-Content Makefile) -replace '^(PROJECT_DIR.*)', 'PROJECT_DIR     ?= $(pwd)/button_LED' | Set-Content Makefile"
+          echo "PROJECT_DIR=${{ github.workspace }}/button_LED" >> $GITHUB_ENV
           make build
+        env:
+          IDF_PATH: ${{ env.IDF_PATH }}
+          IDF_PYTHON: ${{ env.IDF_PYTHON }}
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
