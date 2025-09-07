@@ -11,43 +11,41 @@ jobs:
     runs-on: [self-hosted, windows]
     defaults:
       run:
-        shell: powershell # Use PowerShell as the default shell
+        shell: powershell # Use PowerShell as the default shell for the job
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF and Install Dependencies
+      - name: Setup ESP-IDF environment and dependencies
         run: |
-          # Navigate to ESP-IDF directory
-          cd C:\Users\Xigmatek\esp\esp-idf
-          
-          # Run the install script to ensure all dependencies are met
-          # This is crucial for fixing the "python-deps" error
-          .\install.bat 
-          
-          # Re-export the environment after installation
-          # Use `.` to source the script and keep environment variables in the same session
-          . .\export.ps1 
+          # Source the export script to set up environment variables
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
+
+          # Check and install Python dependencies
+          # This command should ideally be run after export.ps1
+          python -m pip install --upgrade setuptools wheel
+          python -m pip install -r C:\Users\Xigmatek\esp\esp-idf\requirements.txt
+          # Or use the dedicated command if available in your IDF version
+          # python C:\Users\Xigmatek\esp\esp-idf\tools\idf_tools.py install python-deps
 
       - name: Build button_LED (local)
         run: |
-          # Ensure we are in the project directory
-          cd button_LED 
-          # Build the project
+          # Source the export script again to ensure environment is set for this step
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          cd button_LED
           idf.py build
 
       - name: Flash button_LED to ESP32 (local)
         run: |
-          # Ensure we are in the project directory
+          # Source the export script again
+          . C:\Users\Xigmatek\esp\esp-idf\export.ps1
           cd button_LED
-          # Flash the project to the ESP32
           idf.py -p COM7 flash --verbose
 
       - name: Verify firmware on ESP32
         run: |
           cd button_LED
-          # Start the monitor in a background job
           $job = Start-Job { idf.py -p COM7 monitor }
-          Start-Sleep -Seconds 5 # Give it some time to start
-          Stop-Job $job # Stop the monitor job
-          Receive-Job $job # Capture output (optional, can be removed if not needed)
+          Start-Sleep -Seconds 5
+          Stop-Job $job
+          Receive-Job $job
