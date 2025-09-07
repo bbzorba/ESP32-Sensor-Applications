@@ -19,26 +19,25 @@ jobs:
       - name: Setup ESP-IDF, Install Python Dependencies, and Build
         run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED" 
+          $projectDir = "button_LED"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
-          # Ensure the ESP-IDF environment is set up
+          # Set ESP-IDF environment
           . "$idfPath\export.ps1"
 
-          # Set a specific, writable temporary directory for ccache
-          $ccacheTempDir = Join-Path $env:TEMP "ccache_temp"
-          if (-not (Test-Path $ccacheTempDir)) {
-              New-Item -ItemType Directory -Path $ccacheTempDir -Force
+          # Configure ccache temporary directory if not set
+          if (-not $env:CCACHE_TMPDIR) {
+              Write-Host "Setting CCACHE_TMPDIR to a temporary location."
+              $env:CCACHE_TMPDIR = Join-Path $env:TEMP "ccache_temp"
+              if (-not (Test-Path $env:CCACHE_TMPDIR)) {
+                  New-Item -ItemType Directory -Path $env:CCACHE_TMPDIR -Force
+              }
           }
-          $env:CCACHE_TMPDIR = $ccacheTempDir
-          Write-Host "CCACHE_TMPDIR set to: $env:CCACHE_TMPDIR"
 
-          # Navigate to the project directory
           Set-Location $projectDir
 
-          # Install Python dependencies if not already present
-          Write-Host "Checking and installing ESP-IDF Python dependencies..."
-          # Removed --cached as it might not be always reliable and we want to ensure they are installed.
+          # Install Python dependencies
+          Write-Host "Installing ESP-IDF Python dependencies..."
           & "$idfPython" "$idfPath\tools\idf_tools.py" install python-deps
 
           # Build the project
@@ -51,12 +50,10 @@ jobs:
           $projectDir = "button_LED"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
           
-          # Ensure environment is sourced again for this step
           . "$idfPath\export.ps1"
           Set-Location $projectDir
           
           Write-Host "Flashing the project..."
-          # Removed --verbose as it's not a valid option for 'flash' in idf.py
           & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
 
       - name: Verify firmware on ESP32
@@ -68,28 +65,14 @@ jobs:
           Set-Location $projectDir
           
           Write-Host "Starting ESP32 monitor for 10 seconds..."
-          # Using a direct Start-Process with a timeout is often more reliable in CI than Start-Job
-          # The command needs to be executed via PowerShell itself for proper environment handling.
-          $monitorCommand = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
+          $monitorArgs = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
+          $monitorProcess = Start-Process -FilePath powershell -ArgumentList "-Command", $monitorArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
           
-          # Execute the monitor command within the current PowerShell session to pick up exported env vars
-          # Using Start-Process here might re-create a new environment, so executing directly might be better.
-          # If direct execution is problematic with timeouts, Start-Process can be kept with careful argument handling.
-          
-          # Option 1: Direct execution (preferred if monitor can be controlled)
-          # $monitorProcess = Start-Process -FilePath $idfPython -ArgumentList "$idfPath\tools\idf.py -p COM7 monitor" -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
-          
-          # Option 2: Executing via PowerShell command to ensure environment is considered
-          $processArgs = "-Command", "& `"$idfPython`" `"$idfPath\tools\idf.py`" -p COM7 monitor"
-          $monitorProcess = Start-Process -FilePath "powershell.exe" -ArgumentList $processArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
-
-          # Wait for a short period to capture initial output
           Start-Sleep -Seconds 10 
           
-          # Attempt to stop the monitor process if it's still running
           if ($monitorProcess.HasExited -eq $false) {
               Write-Host "Stopping ESP32 monitor..."
-              $monitorProcess.Kill() # Use Kill() for forcefully stopping
+              $monitorProcess.Kill()
               $monitorProcess.WaitForExit()
           }
           
