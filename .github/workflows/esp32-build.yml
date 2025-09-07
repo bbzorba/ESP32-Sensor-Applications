@@ -8,29 +8,31 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container:
-      image: espressif/idf:v4.4.4
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # (Optional) Set up Python if your ESP-IDF needs it
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
 
+      # Set PROJECT_DIR and build hc05_bluetooth
       - name: Build hc05_bluetooth project
         run: |
-          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/hc05_bluetooth|' Makefile
+          powershell -Command "(Get-Content Makefile) -replace '^(PROJECT_DIR.*)', 'PROJECT_DIR     ?= $(pwd)/hc05_bluetooth' | Set-Content Makefile"
           make build
 
+      # Patch CMakeLists.txt for button_LED
       - name: Patch CMakeLists.txt for button_LED
         run: |
-          cd button_LED/main
-          echo 'idf_component_register(SRCS "'$(ls *.cpp | tr '\n' '" "')'INCLUDE_DIRS ".")' > CMakeLists.txt
+          cd button_LED\main
+          dir *.cpp /b | % { Write-Host $_ } | %{ 'idf_component_register(SRCS "' + ($_ -join '" "') + '" INCLUDE_DIRS ".")' } | Set-Content CMakeLists.txt
 
+      # Set PROJECT_DIR and build button_LED
       - name: Build button_LED project
         run: |
-          sed -i 's|^PROJECT_DIR.*|PROJECT_DIR := $(pwd)/button_LED|' Makefile
+          powershell -Command "(Get-Content Makefile) -replace '^(PROJECT_DIR.*)', 'PROJECT_DIR     ?= $(pwd)/button_LED' | Set-Content Makefile"
           make build
