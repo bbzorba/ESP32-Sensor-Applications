@@ -19,19 +19,14 @@ jobs:
         with:
           esp_idf_version: v4.4.4
 
-      - name: Set environment variables for Makefile
-        run: |
-          echo "IDF_PATH=$IDF_PATH" >> $GITHUB_ENV
-          echo "IDF_PYTHON=$IDF_PYTHON" >> $GITHUB_ENV
-          echo "PROJECT_DIR=${{ github.workspace }}/hc05_bluetooth" >> $GITHUB_ENV
-        shell: bash
 
       - name: Build hc05_bluetooth project
+        working-directory: hc05_bluetooth
         run: make build
         env:
           IDF_PATH: ${{ env.IDF_PATH }}
           IDF_PYTHON: ${{ env.IDF_PYTHON }}
-          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          PROJECT_DIR: ${{ github.workspace }}/hc05_bluetooth
 
       - name: Patch CMakeLists.txt for button_LED
         run: |
@@ -41,10 +36,9 @@ jobs:
         shell: pwsh
 
       - name: Build button_LED project
-        run: |
-          echo "PROJECT_DIR=${{ github.workspace }}/button_LED" >> $GITHUB_ENV
-          make build
+        working-directory: button_LED
+        run: make build
         env:
           IDF_PATH: ${{ env.IDF_PATH }}
           IDF_PYTHON: ${{ env.IDF_PYTHON }}
-          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          PROJECT_DIR: ${{ github.workspace }}/button_LED
