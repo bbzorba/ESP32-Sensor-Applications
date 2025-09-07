@@ -69,5 +69,7 @@ jobs:
       - name: Verify firmware on ESP32
         run: |
           cd button_LED
-          timeout 5 idf.py -p COM7 monitor
-        shell: powershell
+          Start-Process idf.py -ArgumentList "-p COM7 monitor" -NoNewWindow
+          Start-Sleep -Seconds 5
+          Get-Process python | ForEach-Object { $_.Kill() }
+        shell: powershell 
