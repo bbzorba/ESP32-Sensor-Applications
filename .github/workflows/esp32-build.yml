@@ -25,24 +25,21 @@ jobs:
           # Ensure the ESP-IDF environment is set up
           . "$idfPath\export.ps1"
 
-          # Ensure ccache is configured correctly (optional: you might need to explicitly set CCACHE_TMPDIR if needed)
-          # Check if CCACHE_TMPDIR is set, if not, set a default temporary directory
-          if (-not $env:CCACHE_TMPDIR) {
-              Write-Host "CCACHE_TMPDIR is not set. Setting to a default temporary directory."
-              $env:CCACHE_TMPDIR = "$env:TEMP\ccache_temp"
-              # Ensure the directory exists and has write permissions
-              if (-not (Test-Path $env:CCACHE_TMPDIR)) {
-                  New-Item -ItemType Directory -Path $env:CCACHE_TMPDIR -Force
-              }
-              Write-Host "CCACHE_TMPDIR set to: $env:CCACHE_TMPDIR"
+          # Set a specific, writable temporary directory for ccache
+          $ccacheTempDir = Join-Path $env:TEMP "ccache_temp"
+          if (-not (Test-Path $ccacheTempDir)) {
+              New-Item -ItemType Directory -Path $ccacheTempDir -Force
           }
+          $env:CCACHE_TMPDIR = $ccacheTempDir
+          Write-Host "CCACHE_TMPDIR set to: $env:CCACHE_TMPDIR"
 
           # Navigate to the project directory
           Set-Location $projectDir
 
           # Install Python dependencies if not already present
           Write-Host "Checking and installing ESP-IDF Python dependencies..."
-          & "$idfPython" "$idfPath\tools\idf_tools.py" install python-deps --cached
+          # Removed --cached as it might not be always reliable and we want to ensure they are installed.
+          & "$idfPython" "$idfPath\tools\idf_tools.py" install python-deps
 
           # Build the project
           Write-Host "Building the project..."
@@ -54,6 +51,7 @@ jobs:
           $projectDir = "button_LED"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
           
+          # Ensure environment is sourced again for this step
           . "$idfPath\export.ps1"
           Set-Location $projectDir
           
@@ -71,9 +69,20 @@ jobs:
           
           Write-Host "Starting ESP32 monitor for 10 seconds..."
           # Using a direct Start-Process with a timeout is often more reliable in CI than Start-Job
-          $monitorArgs = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
-          $monitorProcess = Start-Process -FilePath powershell -ArgumentList "-Command", $monitorArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
+          # The command needs to be executed via PowerShell itself for proper environment handling.
+          $monitorCommand = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
           
+          # Execute the monitor command within the current PowerShell session to pick up exported env vars
+          # Using Start-Process here might re-create a new environment, so executing directly might be better.
+          # If direct execution is problematic with timeouts, Start-Process can be kept with careful argument handling.
+          
+          # Option 1: Direct execution (preferred if monitor can be controlled)
+          # $monitorProcess = Start-Process -FilePath $idfPython -ArgumentList "$idfPath\tools\idf.py -p COM7 monitor" -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
+          
+          # Option 2: Executing via PowerShell command to ensure environment is considered
+          $processArgs = "-Command", "& `"$idfPython`" `"$idfPath\tools\idf.py`" -p COM7 monitor"
+          $monitorProcess = Start-Process -FilePath "powershell.exe" -ArgumentList $processArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
+
           # Wait for a short period to capture initial output
           Start-Sleep -Seconds 10 
           
