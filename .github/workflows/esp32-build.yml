@@ -16,63 +16,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF, Install Python Dependencies, and Build
+      - name: Setup ESP-IDF and Build Project
         run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED"
+          # Assuming 'button_LED' is a direct subdirectory of the repository root
+          $projectDir = "button_LED" 
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
-          # Set ESP-IDF environment
+          # Source the ESP-IDF export script to set up the environment variables
           . "$idfPath\export.ps1"
 
-          # Configure ccache temporary directory if not set
-          if (-not $env:CCACHE_TMPDIR) {
-              Write-Host "Setting CCACHE_TMPDIR to a temporary location."
-              $env:CCACHE_TMPDIR = Join-Path $env:TEMP "ccache_temp"
-              if (-not (Test-Path $env:CCACHE_TMPDIR)) {
-                  New-Item -ItemType Directory -Path $env:CCACHE_TMPDIR -Force
-              }
-          }
-
+          # Navigate to the project directory
           Set-Location $projectDir
 
-          # Install Python dependencies
-          Write-Host "Installing ESP-IDF Python dependencies..."
-          & "$idfPython" "$idfPath\tools\idf_tools.py" install python-deps
-
-          # Build the project
+          # Build the project using idf.py
           Write-Host "Building the project..."
           & "$idfPython" "$idfPath\tools\idf.py" build
 
-      - name: Flash button_LED to ESP32 (local)
+      - name: Flash Project to ESP32
         run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
           $projectDir = "button_LED"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
           
+          # Re-source export script and navigate to project directory for each step
           . "$idfPath\export.ps1"
           Set-Location $projectDir
           
           Write-Host "Flashing the project..."
+          # Removed --verbose, as it's not a standard option for idf.py flash
           & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
 
-      - name: Verify firmware on ESP32
+      - name: Verify Firmware on ESP32
         run: |
           $projectDir = "button_LED"
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
+          # Navigate to the project directory
           Set-Location $projectDir
           
           Write-Host "Starting ESP32 monitor for 10 seconds..."
+          # Use Start-Process for better control in CI environments
           $monitorArgs = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
           $monitorProcess = Start-Process -FilePath powershell -ArgumentList "-Command", $monitorArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
           
+          # Wait for a short period to capture initial output
           Start-Sleep -Seconds 10 
           
+          # Attempt to stop the monitor process if it's still running
           if ($monitorProcess.HasExited -eq $false) {
               Write-Host "Stopping ESP32 monitor..."
-              $monitorProcess.Kill()
+              $monitorProcess.Kill() 
               $monitorProcess.WaitForExit()
           }
           
