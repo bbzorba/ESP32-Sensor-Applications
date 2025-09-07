@@ -13,28 +13,31 @@ jobs:
       run:
         shell: cmd
     steps:
-      - name: Set up ESP-IDF
-        run: call C:\Users\Xigmatek\esp\esp-idf\export.bat
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install ESP-IDF Python deps
-        run: pip install -r C:\Users\Xigmatek\esp\esp-idf\requirements.txt
-
-      - name: Build hc05_bluetooth
+      - name: Setup ESP-IDF environment
         run: |
-          cd hc05_bluetooth
-          idf.py build
+          call C:\Users\Xigmatek\esp\esp-idf\install.bat
+          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
 
-      - name: Flash hc05_bluetooth to ESP32
+      - name: Build button_LED (local)
         run: |
-          cd hc05_bluetooth
-          idf.py -p COM7 flash
-
-      - name: Build button_LED
-        run: |
+          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
           cd button_LED
           idf.py build
 
-      - name: Flash button_LED to ESP32
+      - name: Flash button_LED to ESP32 (local)
+        run: |
+          call C:\Users\Xigmatek\esp\esp-idf\export.ps1
+          cd button_LED
+          idf.py -p COM7 flash --verbose
+
+      - name: Verify firmware on ESP32
+        shell: powershell
         run: |
           cd button_LED
-          idf.py -p COM7 flash
+          $job = Start-Job { idf.py -p COM7 monitor }
+          Start-Sleep -Seconds 5
+          Stop-Job $job
+          Receive-Job $job
