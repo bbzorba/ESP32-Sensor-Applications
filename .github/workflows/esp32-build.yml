@@ -24,7 +24,7 @@ jobs:
           cd button_LED/main
           $srcs = (Get-ChildItem *.cpp | ForEach-Object { $_.Name }) -join '" "'
           Set-Content CMakeLists.txt "idf_component_register(SRCS `"$srcs`" INCLUDE_DIRS `".`")"
-        shell: powershell
+        shell: pwsh
 
       - name: Build button_LED project
         uses: espressif/esp-idf-ci-action@v1
