@@ -33,7 +33,7 @@ jobs:
           # This uses the ESP-IDF's specified Python interpreter and idf.py script
           # to ensure all dependencies are met.
           & "$idfPython" "$idfPath\tools\idf.py" build
-          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash --verbose
+          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
 
       - name: Verify firmware on ESP32
         run: |
