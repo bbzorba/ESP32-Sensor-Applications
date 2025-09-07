@@ -11,71 +11,94 @@ jobs:
     runs-on: [self-hosted, windows]
     defaults:
       run:
-        shell: powershell
+        shell: powershell # Use PowerShell for consistent environment setup
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF environment, build and flash
+      - name: Setup ESP-IDF Environment
+        id: setup_idf
         run: |
-          # Define paths as variables for clarity and easier modification
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          
+          # Source the ESP-IDF export script to set up the environment
+          # The '.' operator runs the script in the current scope, so environment variables are preserved.
+          . "$idfPath\export.ps1"
+          
+          # Verify Python dependencies. This command is crucial for resolving issues with missing packages.
+          # It might attempt to install missing packages or report them.
+          Write-Host "Checking Python dependencies..."
+          "$idfPath\tools\idf_tools.py" install python-deps
+          
+          # If you encounter specific errors here, you might need to manually install them using pip:
+          # For example:
+          # & "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe" -m pip install future cryptography pyparsing gdbgui pygdbmi python-socketio reedsolo bitstring ecdsa esp-windows-curses
+
+      - name: Build Project
+        run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
           $projectDir = "button_LED" # Assuming button_LED is at the root of the checkout
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
-          # Source the export script to set up the environment
+          # Ensure the ESP-IDF environment is sourced (critical for each new shell)
           . "$idfPath\export.ps1"
-
+          
           # Navigate to the project directory
           Set-Location $projectDir
-
-          # Construct and execute the idf.py build and flash commands
-          # This uses the ESP-IDF's specified Python interpreter and idf.py script
-          # to ensure all dependencies are met.
+          
+          # Execute the build command
+          Write-Host "Building project..."
           & "$idfPython" "$idfPath\tools\idf.py" build
-          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
 
-      - name: Verify firmware on ESP32
+      - name: Flash Project to ESP32
         run: |
-          $projectDir = "button_LED"
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $projectDir = "button_LED"
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
-          # Ensure the monitor command runs in the correct environment
+          # Source the ESP-IDF export script again
+          . "$idfPath\export.ps1"
+          
+          # Navigate to the project directory
           Set-Location $projectDir
           
-          # Using Start-Job might be problematic across different shell contexts.
-          # A direct execution might be more reliable for the monitor.
-          # However, if you need to capture output, Start-Job is an option.
-          # If monitor itself fails, it might be an issue with the ESP-IDF installation or the project.
-          
-          # Attempting to run monitor directly for simplicity and better error reporting
-          # If this fails, you might need to adjust how monitor is handled in CI.
-          try {
-              Write-Host "Starting ESP32 monitor..."
-              $monitorProcess = Start-Process -FilePath $idfPython -ArgumentList "$idfPath\tools\idf.py -p COM7 monitor" -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
-              
-              # Wait for a short period to capture initial output, then stop
-              Start-Sleep -Seconds 5 
-              
-              # If the process is still running, attempt to stop it. This might not always work cleanly.
-              if ($monitorProcess.HasExited -eq $false) {
-                  Write-Host "Stopping ESP32 monitor..."
-                  $monitorProcess.CloseMainWindow() # Or $monitorProcess.Kill() if necessary
-                  $monitorProcess.WaitForExit(2000) # Wait a bit for it to exit
-              }
-              
-              if ($monitorProcess.HasExited -eq $false) {
-                  Write-Host "Monitor process did not exit cleanly. Attempting to kill."
-                  $monitorProcess.Kill()
-                  $monitorProcess.WaitForExit()
-              }
-              
-              Write-Host "Monitor output:"
-              Get-Content monitor_output.txt
-              Write-Host "Monitor error output:"
-              Get-Content monitor_error.txt
+          # Execute the flash command. Removed --verbose as it's not a standard option for flash.
+          Write-Host "Flashing project to COM7..."
+          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
 
-          } catch {
-              Write-Error "An error occurred during monitor execution: $($_.Exception.Message)"
+      - name: Verify Firmware (Monitor)
+        # This step is kept as PowerShell to allow for better control over background jobs
+        run: |
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $projectDir = "button_LED"
+          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
+
+          # Source the ESP-IDF export script
+          . "$idfPath\export.ps1"
+          
+          # Navigate to the project directory
+          Set-Location $projectDir
+          
+          Write-Host "Starting ESP32 monitor for 10 seconds..."
+          # Using Start-Job as in your original code, but ensure it runs within the correct context.
+          # If this continues to be problematic, consider a simpler direct execution or a different approach for monitoring in CI.
+          $monitorJob = Start-Job {
+              $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+              $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
+              $projectDir = "button_LED"
+              
+              # Re-source export script within the job's context
+              . "$idfPath\export.ps1"
+              Set-Location $projectDir
+              
+              & "$idfPython" "$idfPath\tools\idf.py" -p COM7 monitor
           }
+          
+          # Give the monitor some time to start and capture output
+          Start-Sleep -Seconds 10 
+          
+          Write-Host "Stopping ESP32 monitor..."
+          # Stop the job and attempt to retrieve its output
+          Stop-Job $monitorJob
+          Receive-Job $monitorJob # This will capture the output if any, and throw an error if the job failed.
+          Write-Host "Monitor session ended."
