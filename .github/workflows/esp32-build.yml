@@ -16,62 +16,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup ESP-IDF and Build Project
+      - name: Build and Flash
         run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          # Assuming 'button_LED' is a direct subdirectory of the repository root
           $projectDir = "button_LED" 
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-
-          # Source the ESP-IDF export script to set up the environment variables
-          . "$idfPath\export.ps1"
-
-          # Navigate to the project directory
-          Set-Location $projectDir
-
-          # Build the project using idf.py
-          Write-Host "Building the project..."
-          & "$idfPython" "$idfPath\tools\idf.py" build
-
-      - name: Flash Project to ESP32
-        run: |
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED"
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-          
-          # Re-source export script and navigate to project directory for each step
-          . "$idfPath\export.ps1"
-          Set-Location $projectDir
-          
-          Write-Host "Flashing the project..."
-          # Removed --verbose, as it's not a standard option for idf.py flash
-          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
-
-      - name: Verify Firmware on ESP32
-        run: |
-          $projectDir = "button_LED"
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-
-          # Navigate to the project directory
-          Set-Location $projectDir
-          
-          Write-Host "Starting ESP32 monitor for 10 seconds..."
-          # Use Start-Process for better control in CI environments
-          $monitorArgs = "$idfPython `"$idfPath\tools\idf.py`" -p COM7 monitor"
-          $monitorProcess = Start-Process -FilePath powershell -ArgumentList "-Command", $monitorArgs -Wait -PassThru -RedirectStandardOutput "monitor_output.txt" -RedirectStandardError "monitor_error.txt"
-          
-          # Wait for a short period to capture initial output
-          Start-Sleep -Seconds 10 
-          
-          # Attempt to stop the monitor process if it's still running
-          if ($monitorProcess.HasExited -eq $false) {
-              Write-Host "Stopping ESP32 monitor..."
-              $monitorProcess.Kill() 
-              $monitorProcess.WaitForExit()
+          $env:CCACHE_TMPDIR = "$env:TEMP\ccache_temp"
+          if (-not (Test-Path $env:CCACHE_TMPDIR)) {
+              New-Item -ItemType Directory -Path $env:CCACHE_TMPDIR -Force
           }
           
-          Write-Host "Monitor output:"
-          Get-Content monitor_output.txt
-          Write-Host "Monitor error output:"
-          Get-Content monitor_error.txt
+          . "$idfPath\export.ps1"
+          Set-Location $projectDir
+          idf.py build
+          idf.py -p COM7 flash
+
+      - name: Verify firmware on ESP32
+        run: |
+          $projectDir = "button_LED"
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
+          
+          Set-Location $projectDir
+          
+          Write-Host "Starting ESP32 monitor..."
+          $monitorProcess = Start-Process -FilePath powershell -ArgumentList "-Command", " & '$idfPython' '$idfPath\tools\idf.py' -p COM7 monitor" -Wait -PassThru
+          
+          Start-Sleep -Seconds 10
+          
+          if ($monitorProcess.HasExited -eq $false) {
+              Write-Host "Stopping ESP32 monitor..."
+              $monitorProcess.Kill()
+              $monitorProcess.WaitForExit()
+          }
