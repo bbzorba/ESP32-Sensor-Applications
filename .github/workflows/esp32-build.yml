@@ -19,9 +19,7 @@ jobs:
         with:
           esp_idf_version: v4.4.4
 
-
       - name: Build hc05_bluetooth project
-        working-directory: hc05_bluetooth
         run: make build
         env:
           IDF_PATH: ${{ env.IDF_PATH }}
@@ -36,7 +34,6 @@ jobs:
         shell: pwsh
 
       - name: Build button_LED project
-        working-directory: button_LED
         run: make build
         env:
           IDF_PATH: ${{ env.IDF_PATH }}
