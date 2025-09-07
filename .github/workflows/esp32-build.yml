@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
+  IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
+  PROJECT_DIR: button_LED
+  SERIAL_PORT: COM7
+
 jobs:
   build-local:
     runs-on: [self-hosted, windows]
@@ -25,25 +31,25 @@ jobs:
         env:
           CCACHE_DISABLE: "1"
         run: |
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED"
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-          . "$idfPath\export.ps1"
-          Set-Location $projectDir
+          . "${env:IDF_PATH}\export.ps1"
+          Set-Location $env:PROJECT_DIR
           Write-Host "Cleaning build directory..."
-          & "$idfPython" "$idfPath\tools\idf.py" fullclean
+          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" fullclean
 
       - name: Setup ESP-IDF and Build Project
         env:
           CCACHE_DISABLE: "1"
         run: |
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED" 
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-          . "$idfPath\export.ps1"
-          Set-Location $projectDir
+          . "${env:IDF_PATH}\export.ps1"
+          Set-Location $env:PROJECT_DIR
           Write-Host "Building the project..."
-          & "$idfPython" "$idfPath\tools\idf.py" build
+          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: button_led_build
+          path: button_LED/build
 
   flash-local:
     runs-on: [self-hosted, windows]
@@ -55,6 +61,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: button_led_build
+          path: button_LED/build
+
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
@@ -64,13 +76,10 @@ jobs:
         env:
           CCACHE_DISABLE: "1"
         run: |
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $projectDir = "button_LED"
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-          . "$idfPath\export.ps1"
-          Set-Location $projectDir
+          . "${env:IDF_PATH}\export.ps1"
+          Set-Location $env:PROJECT_DIR
           Write-Host "Flashing the project..."
-          & "$idfPython" "$idfPath\tools\idf.py" -p COM7 flash
+          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" -p $env:SERIAL_PORT flash
 
   verify-local:
     runs-on: [self-hosted, windows]
@@ -82,6 +91,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: button_led_build
+          path: button_LED/build
+
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
@@ -91,12 +106,9 @@ jobs:
         env:
           CCACHE_DISABLE: "1"
         run: |
-          $projectDir = "button_LED"
-          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
-          Set-Location $projectDir
+          Set-Location $env:PROJECT_DIR
           Write-Host "Starting ESP32 monitor for 10 seconds..."
-          $monitor = Start-Process -FilePath "$idfPython" -ArgumentList @("$idfPath\tools\idf.py", "-p", "COM7", "monitor") -NoNewWindow -PassThru -RedirectStandardOutput monitor_output.txt -RedirectStandardError monitor_error.txt
+          $monitor = Start-Process -FilePath "${env:IDF_PYTHON}" -ArgumentList @("${env:IDF_PATH}\tools\idf.py", "-p", $env:SERIAL_PORT, "monitor") -NoNewWindow -PassThru -RedirectStandardOutput monitor_output.txt -RedirectStandardError monitor_error.txt
           Start-Sleep -Seconds 10
           if (-not $monitor.HasExited) {
             Write-Host "Stopping ESP32 monitor..."
