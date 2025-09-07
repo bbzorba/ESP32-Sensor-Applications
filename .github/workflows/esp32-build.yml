@@ -38,6 +38,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup ESP-IDF environment
+        run: |
+          call C:\Users\Xigmatek\esp\esp-idf\export.bat
+        shell: cmd
+
       - name: Build hc05_bluetooth (local)
         run: |
           cd hc05_bluetooth
@@ -69,7 +74,8 @@ jobs:
       - name: Verify firmware on ESP32
         run: |
           cd button_LED
-          Start-Process idf.py -ArgumentList "-p COM7 monitor" -NoNewWindow
+          $job = Start-Job { idf.py -p COM7 monitor }
           Start-Sleep -Seconds 5
-          Get-Process python | ForEach-Object { $_.Kill() }
-        shell: powershell 
+          Stop-Job $job
+          Receive-Job $job
+        shell: powershell
