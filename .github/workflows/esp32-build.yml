@@ -16,10 +16,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean Build Directory
+        run: |
+          $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
+          $projectDir = "button_LED"
+          $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
+          . "$idfPath\export.ps1"
+          Set-Location $projectDir
+          Write-Host "Cleaning build directory..."
+          & "$idfPython" "$idfPath\tools\idf.py" fullclean
+
       - name: Setup ESP-IDF and Build Project
         run: |
           $idfPath = "C:\Users\Xigmatek\esp\esp-idf"
-          # Assuming 'button_LED' is a direct subdirectory of the repository root
           $projectDir = "button_LED" 
           $idfPython = "C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe"
 
