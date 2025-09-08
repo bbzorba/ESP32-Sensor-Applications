@@ -19,9 +19,6 @@ env:
   #PROJECT_DIR: button_LED
   #SERIAL_PORT: COM7
 
-defaults:
-  run:
-    shell: powershell.exe
 
 jobs:
   build-local:
