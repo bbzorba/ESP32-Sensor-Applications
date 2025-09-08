@@ -21,14 +21,11 @@ env:
 
 defaults:
   run:
-    shell: powershell
+    shell: powershell.exe
 
 jobs:
   build-local:
     runs-on: [self-hosted, windows]
-    defaults:
-      run:
-        shell: powershell
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,9 +62,6 @@ jobs:
   flash-local:
     runs-on: [self-hosted, windows]
     needs: build-local
-    defaults:
-      run:
-        shell: powershell
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -95,9 +89,6 @@ jobs:
   verify-local:
     runs-on: [self-hosted, windows]
     needs: flash-local
-    defaults:
-      run:
-        shell: powershell
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
