@@ -23,14 +23,13 @@ public:
         };
         sdmmc_host_t host = SDSPI_HOST_DEFAULT();
         host.slot = SPI2_HOST;
-        spi_bus_config_t bus_cfg = {
-            .mosi_io_num = 23,
-            .miso_io_num = 19,
-            .sclk_io_num = 18,
-            .quadwp_io_num = -1,
-            .quadhd_io_num = -1,
-            .max_transfer_sz = 4000
-        };
+        spi_bus_config_t bus_cfg = {};
+        bus_cfg.mosi_io_num = 23;
+        bus_cfg.miso_io_num = 19;
+        bus_cfg.sclk_io_num = 18;
+        bus_cfg.quadwp_io_num = -1;
+        bus_cfg.quadhd_io_num = -1;
+        bus_cfg.max_transfer_sz = 4000;
         esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "Failed to initialize SPI bus");
