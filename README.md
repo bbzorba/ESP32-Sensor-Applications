@@ -69,13 +69,26 @@ Each project in this repository includes the source code suitable for ESP-IDF pr
     - Use the ESP-IDF extension or terminal commands (`idf.py menuconfig`, `idf.py build`, `idf.py flash`) to configure, build, and flash your project.
 
 ---
-**Using the Provided Makefile:**
 
-As an alternative to running `idf.py` commands directly, you can use the provided Makefile (located at the root of this repository) to build, flash, and monitor your ESP-IDF projects from PowerShell on Windows. Before using it, edit the variables at the top of the Makefile:
+**Using the Provided Makefile (Windows & MacOS):**
 
-    PROJECT_DIR  — Set this to the absolute path of your ESP-IDF project directory (e.g., `D:/baris/personal/personal_projects/ESP32/my_projects/blink`).
-    PORT         — Set this to your ESP32's serial port (e.g., `COM4`).
-    IDF_PATH     — Set this to your ESP-IDF installation path (e.g., `C:/Users/youruser/esp/esp-idf`).
+As an alternative to running `idf.py` commands directly, you can use the provided Makefile (located at the root of this repository) to build, flash, and monitor your ESP-IDF projects. The Makefile supports both Windows (PowerShell) and MacOS (bash/zsh) environments.
+
+**Before using the Makefile:**
+
+1. **Edit the variables at the top of the Makefile for your system:**
+    - `PROJECT_DIR`  — Set this to the absolute path of your ESP-IDF project directory (e.g., `/Users/youruser/esp/my_project` for MacOS, or `D:/youruser/esp/my_project` for Windows).
+    - `PORT`         — Set this to your ESP32's serial port (e.g., `COM4` for Windows, `/dev/cu.usbserial-0001` for MacOS).
+    - `IDF_PATH`     — Set this to your ESP-IDF installation path (e.g., `/Users/youruser/esp/esp-idf` for MacOS, or `C:/Users/youruser/esp/esp-idf` for Windows).
+    - `IDF_PYTHON`   — Set this to your ESP-IDF Python path (e.g., `/Users/youruser/required_idf_tools_path/python_env/idf5.5_py3.13_env/bin/python3` for MacOS, or the appropriate `.exe` for Windows).
+
+2. **For MacOS users:**
+    - **Uncomment** the MacOS-specific lines at the top of the Makefile (look for the section labeled `#Paths for MacOS` and the `# MacOS IDF CMD`).
+    - **Comment out** the Windows-specific lines (look for the section labeled `#Paths for Work PC` and the `IDF_CMD` for PowerShell).
+    - The MacOS command template uses bash and the `.sh` export script, while Windows uses PowerShell and the `.ps1` export script.
+
+3. **For Windows users:**
+    - Make sure the Windows-specific lines are uncommented and the MacOS lines are commented out.
 
 Once configured, you can run commands like:
 
@@ -84,7 +97,8 @@ Once configured, you can run commands like:
     make monitor    # Opens the serial monitor
     make menuconfig # Opens the configuration menu
 
-This Makefile is a convenient wrapper for PowerShell users on Windows, but you can always use the standard `idf.py` commands directly if you prefer.
+This Makefile is a convenient wrapper for both PowerShell (Windows) and bash/zsh (MacOS) users, but you can always use the standard `idf.py` commands directly if you prefer.
+
 **Note:**
 
 

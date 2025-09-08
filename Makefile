@@ -31,7 +31,6 @@ PORT ?= COM3
 
 
 # ----------------------------------- Main Command Template -----------------------------------
-# This defines a reusable command pattern using a robust PowerShell script block.
 
 # Use ESP-IDF's managed Python to run idf.py, ensuring correct dependencies.
 IDF_CMD = powershell -NoProfile -ExecutionPolicy Bypass -Command "& { . '$(IDF_PATH)/export.ps1'; Set-Location '$(PROJECT_DIR)'; & '$(IDF_PYTHON)' '$(IDF_PATH)/tools/idf.py' $(1) }"
