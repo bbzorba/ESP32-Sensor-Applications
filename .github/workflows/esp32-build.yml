@@ -1,3 +1,6 @@
+defaults:
+  run:
+    shell: powershell
 name: ESP32 CI Build & Flash
 
 on:
