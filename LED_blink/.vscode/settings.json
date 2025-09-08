@@ -1,0 +1,10 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.espIdfPathWin": "C:\\Users\\bzorba.B1-ES\\esp\\v5.4.2\\esp-idf",
+  "idf.toolsPathWin": "C:\\Users\\bzorba.B1-ES\\.espressif",
+  "idf.pythonInstallPath": "C:\\Users\\bzorba.B1-ES\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+  "makefile.configureOnOpen": false,
+  "files.associations": {
+    "gpio.h": "c"
+  }
+}

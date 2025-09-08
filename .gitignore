@@ -1,2 +1,4 @@
 build/
 actions-runner/
+ESP32_C_Projects/
+read_i2c_dev/

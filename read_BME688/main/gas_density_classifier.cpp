@@ -1,9 +1,13 @@
+
+
+#include <stdio.h>
 #include <string.h>
 #include "bme68x.h"
 #include "bme68x_defs.h"
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "esp_rom_sys.h"
+#include "esp_spiffs.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_SCL_IO 22
@@ -15,16 +19,16 @@ class BME688 {
 public:
     static constexpr const char* TAG = "BME688";
     BME688() {
-    i2c_config_t i2c_conf;
-    i2c_conf.mode = I2C_MODE_MASTER;
-    i2c_conf.sda_io_num = I2C_MASTER_SDA_IO;
-    i2c_conf.scl_io_num = I2C_MASTER_SCL_IO;
-    i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-    i2c_conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-    i2c_conf.clk_flags = 0;
-    i2c_param_config(I2C_MASTER_NUM, &i2c_conf);
-    i2c_driver_install(I2C_MASTER_NUM, i2c_conf.mode, 0, 0, 0);
+        i2c_config_t i2c_conf;
+        i2c_conf.mode = I2C_MODE_MASTER;
+        i2c_conf.sda_io_num = I2C_MASTER_SDA_IO;
+        i2c_conf.scl_io_num = I2C_MASTER_SCL_IO;
+        i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
+        i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
+        i2c_conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
+        i2c_conf.clk_flags = 0;
+        i2c_param_config(I2C_MASTER_NUM, &i2c_conf);
+        i2c_driver_install(I2C_MASTER_NUM, i2c_conf.mode, 0, 0, 0);
 
         dev_addr = BME68X_ADDR;
         dev = {};
@@ -65,30 +69,19 @@ public:
         ok = true;
     }
 
-    void loop() {
-        if (!ok) return;
-        while (true) {
-            int8_t rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &dev);
-            if (rslt != BME68X_OK) {
-                ESP_LOGE(TAG, "bme68x_set_op_mode failed: %d", rslt);
-                vTaskDelay(2000 / portTICK_PERIOD_MS);
-                continue;
-            }
-            uint32_t del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &dev) / 1000 + heatr_conf.heatr_dur;
-            vTaskDelay(del_period / portTICK_PERIOD_MS + 1);
-            struct bme68x_data data;
-            uint8_t n_fields;
-            rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &dev);
-            if (rslt == BME68X_OK && n_fields > 0) {
-                ESP_LOGI(TAG, "Temperature: %.2f°C", data.temperature);
-                ESP_LOGI(TAG, "Pressure: %.2f hPa", data.pressure / 100.0f);
-                ESP_LOGI(TAG, "Humidity: %.2f %%", data.humidity);
-                ESP_LOGI(TAG, "Gas Resistance: %.2f KOhms", data.gas_resistance / 1000.0);
-            } else {
-                ESP_LOGW(TAG, "No data or error reading BME68x: %d", rslt);
-            }
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
+    float read_gas_resistance() {
+        if (!ok) return -1.0f;
+        int8_t rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &dev);
+        if (rslt != BME68X_OK) return -1.0f;
+        uint32_t del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &dev) / 1000 + heatr_conf.heatr_dur;
+        vTaskDelay(del_period / portTICK_PERIOD_MS + 1);
+        struct bme68x_data data;
+        uint8_t n_fields;
+        rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &dev);
+        if (rslt == BME68X_OK && n_fields > 0) {
+            return data.gas_resistance;
         }
+        return -1.0f;
     }
 
     static int8_t bme68x_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr) {
@@ -132,13 +125,76 @@ private:
     struct bme68x_heatr_conf heatr_conf;
     uint8_t dev_addr;
     bool ok = false;
-
 };
 
 
-using namespace bme;
+struct Threshold {
+    float value;
+    char label[32];
+};
+
+Threshold thresholds[10];
+int num_thresholds = 0;
+
+void init_spiffs() {
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/spiffs",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = true
+    };
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+    if (ret != ESP_OK) {
+        printf("Failed to mount SPIFFS (%d)\n", ret);
+    }
+}
+
+void load_thresholds() {
+    FILE* f = fopen("/spiffs/gas_samples.csv", "r");
+    if (!f) {
+        printf("Failed to open /spiffs/gas_samples.csv for reading\n");
+        return;
+    }
+    char line[128];
+    fgets(line, sizeof(line), f); // skip header
+    while (fgets(line, sizeof(line), f)) {
+        int sample_num;
+        float value;
+        char label[32];
+        if (sscanf(line, "%d,%f,%31s", &sample_num, &value, label) == 3) {
+            thresholds[num_thresholds].value = value;
+            strncpy(thresholds[num_thresholds].label, label, sizeof(thresholds[num_thresholds].label));
+            num_thresholds++;
+            if (num_thresholds >= 10) break;
+        }
+    }
+    fclose(f);
+}
+
+const char* classify_gas(float gas_res) {
+    // Find closest threshold
+    float min_diff = 1e9;
+    const char* best_label = "Unknown";
+    for (int i = 0; i < num_thresholds; ++i) {
+        float diff = fabsf(gas_res - thresholds[i].value);
+        if (diff < min_diff) {
+            min_diff = diff;
+            best_label = thresholds[i].label;
+        }
+    }
+    return best_label;
+}
+
 
 extern "C" void app_main() {
+    init_spiffs();
+    load_thresholds();
     BME688 sensor;
-    sensor.loop();
+    printf("Gas density classifier running...\n");
+    while (true) {
+        float gas_res = sensor.read_gas_resistance();
+        const char* gas_type = classify_gas(gas_res);
+        printf("Measured gas resistance: %.2f Ohms, Classified as: %s\n", gas_res, gas_type);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
 }
