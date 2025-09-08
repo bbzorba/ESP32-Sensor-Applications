@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
+
 env:
   #Paths for Work PC
   IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
@@ -17,6 +18,10 @@ env:
   #IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
   #PROJECT_DIR: button_LED
   #SERIAL_PORT: COM7
+
+defaults:
+  run:
+    shell: powershell
 
 jobs:
   build-local:
