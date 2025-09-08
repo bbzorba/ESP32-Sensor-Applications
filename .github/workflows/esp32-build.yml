@@ -13,12 +13,18 @@ env:
   IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
   PROJECT_DIR: button_LED
   SERIAL_PORT: COM3
+
   #paths for Home PC
   #IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
   #IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
   #PROJECT_DIR: button_LED
   #SERIAL_PORT: COM7
 
+  # Paths for MacOS
+  #IDF_PATH: /Users/basakisilzorba/esp/esp-idf
+  #IDF_PYTHON: /Users/basakisilzorba/required_idf_tools_path/python_env/idf5.5_py3.13_env/bin/python3
+  #PROJECT_DIR: button_LED
+  #SERIAL_PORT: /dev/cu.usbserial-0001
 
 jobs:
   build-local:
