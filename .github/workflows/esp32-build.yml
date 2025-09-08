@@ -31,27 +31,26 @@ jobs:
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
-        shell: powershell
 
       - name: Clean Build Directory
         env:
           CCACHE_DISABLE: "1"
         run: |
-          . "${env:IDF_PATH}\export.ps1"
-          Set-Location $env:PROJECT_DIR
-          Write-Host "Cleaning build directory..."
-          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" fullclean
-        shell: powershell
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Cleaning build directory...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" fullclean
+        shell: cmd
 
       - name: Setup ESP-IDF and Build Project
         env:
           CCACHE_DISABLE: "1"
         run: |
-          . "${env:IDF_PATH}\export.ps1"
-          Set-Location $env:PROJECT_DIR
-          Write-Host "Building the project..."
-          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" build
-        shell: powershell
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Building the project...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" build
+        shell: cmd
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -76,17 +75,16 @@ jobs:
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
-        shell: powershell
 
       - name: Flash Project to ESP32
         env:
           CCACHE_DISABLE: "1"
         run: |
-          . "${env:IDF_PATH}\export.ps1"
-          Set-Location $env:PROJECT_DIR
-          Write-Host "Flashing the project..."
-          & "${env:IDF_PYTHON}" "${env:IDF_PATH}\tools\idf.py" -p $env:SERIAL_PORT flash
-        shell: powershell
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Flashing the project...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% flash
+        shell: cmd
 
   verify-local:
     runs-on: [self-hosted, windows]
@@ -105,23 +103,19 @@ jobs:
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
-        shell: powershell
 
       - name: Verify Firmware on ESP32
         env:
           CCACHE_DISABLE: "1"
         run: |
-          Set-Location $env:PROJECT_DIR
-          Write-Host "Starting ESP32 monitor for 10 seconds..."
-          $monitor = Start-Process -FilePath "${env:IDF_PYTHON}" -ArgumentList @("${env:IDF_PATH}\tools\idf.py", "-p", $env:SERIAL_PORT, "monitor") -NoNewWindow -PassThru -RedirectStandardOutput monitor_output.txt -RedirectStandardError monitor_error.txt
-          Start-Sleep -Seconds 10
-          if (-not $monitor.HasExited) {
-            Write-Host "Stopping ESP32 monitor..."
-            $monitor.Kill()
-            $monitor.WaitForExit()
-          }
-          Write-Host "Monitor output:"
-          Get-Content monitor_output.txt
-          Write-Host "Monitor error output:"
-          Get-Content monitor_error.txt
-        shell: powershell
+          cd /d "%PROJECT_DIR%"
+          echo Starting ESP32 monitor for 10 seconds...
+          start "" /b "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% monitor > monitor_output.txt 2> monitor_error.txt
+          timeout /t 10
+          echo Stopping ESP32 monitor...
+          for /f "tokens=2" %%a in ('tasklist ^| findstr /i "idf.py"') do taskkill /pid %%a /f
+          echo Monitor output:
+          type monitor_output.txt
+          echo Monitor error output:
+          type monitor_error.txt
+        shell: cmd
