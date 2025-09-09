@@ -2,6 +2,7 @@
     "configurations": [
         {
             "name": "ESP32-IDF",
+            // Work PC paths
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/**",
@@ -13,12 +14,25 @@
                 "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/xtensa/include",
                 "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/driver/include",
                 "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/sdmmc/include",
-                "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/fatfs/vfs"
+                "C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf/components/fatfs/vfs",
+                // Home PC paths
+                "C:/Users/Xigmatek/esp/esp-idf/components/**",
+                "C:/Users/Xigmatek/esp/esp-idf/components/freertos/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/esp_system/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/esp_rom/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/esp_common/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/xtensa/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/driver/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/sdmmc/include",
+                "C:/Users/Xigmatek/esp/esp-idf/components/fatfs/vfs"
             ],
             "defines": [
                 "ESP_PLATFORM"
             ],
+            // Work PC compilerPath
             "compilerPath": "C:/Users/bzorba.B1-ES/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe",
+            // Home PC compilerPath
+            // "compilerPath": "E:/dev/ESP32/.espressif/tools/xtensa-esp32-elf/esp-2020r3-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
