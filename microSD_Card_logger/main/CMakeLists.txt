@@ -1,4 +1,4 @@
-set(srcs "sd_card_controller.c")
+set(srcs "sd_card_controller.cpp")
 
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "."
