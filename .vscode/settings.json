@@ -1,3 +1,15 @@
 {
-    "cmake.sourceDirectory": "E:/dev/ESP32/my_Projects/hc05_bluetooth"
+    "cmake.sourceDirectory": "E:/dev/ESP32/my_Projects/hc05_bluetooth",
+    "files.associations": {
+        "array": "cpp",
+        "chrono": "cpp",
+        "format": "cpp",
+        "forward_list": "cpp",
+        "initializer_list": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp",
+        "xtree": "cpp",
+        "xutility": "cpp",
+        "cstdio": "cpp"
+    }
 }

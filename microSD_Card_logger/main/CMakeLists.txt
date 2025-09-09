@@ -1,4 +1,4 @@
-set(srcs "sd_card_logger.cpp")
+set(srcs "basic_sd_card_logger.cpp")
 
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "."
