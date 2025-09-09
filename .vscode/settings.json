@@ -10,6 +10,13 @@
         "xstring": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "cstdio": "cpp"
+        "cstdio": "cpp",
+        "cstring": "cpp",
+        "sdspi_host.h": "c",
+        "sdmmc_host.h": "c",
+        "string": "cpp",
+        "gpio.h": "c",
+        "esp_log.h": "c",
+        "sdmmc_cmd.h": "c"
     }
 }

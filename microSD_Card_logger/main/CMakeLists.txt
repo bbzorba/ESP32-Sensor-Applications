@@ -1,6 +1,6 @@
-set(srcs "basic_sd_card_logger.cpp")
+set(srcs "sd_card_controller.c")
 
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS "."
-                       REQUIRES fatfs sd_card
+                       PRIV_REQUIRES "fatfs" "esp_driver_sdmmc" "esp_driver_spi"
                        WHOLE_ARCHIVE)
