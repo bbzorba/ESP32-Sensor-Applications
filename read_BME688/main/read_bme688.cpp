@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "esp_rom_sys.h"
+#include "esp_timer.h"
 
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_SCL_IO 22
@@ -65,29 +66,29 @@ public:
         ok = true;
     }
 
-    void loop() {
-        if (!ok) return;
-        while (true) {
-            int8_t rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &dev);
-            if (rslt != BME68X_OK) {
-                ESP_LOGE(TAG, "bme68x_set_op_mode failed: %d", rslt);
-                vTaskDelay(2000 / portTICK_PERIOD_MS);
-                continue;
-            }
-            uint32_t del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &dev) / 1000 + heatr_conf.heatr_dur;
-            vTaskDelay(del_period / portTICK_PERIOD_MS + 1);
-            struct bme68x_data data;
-            uint8_t n_fields;
-            rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &dev);
-            if (rslt == BME68X_OK && n_fields > 0) {
-                ESP_LOGI(TAG, "Temperature: %.2f°C", data.temperature);
-                ESP_LOGI(TAG, "Pressure: %.2f hPa", data.pressure / 100.0f);
-                ESP_LOGI(TAG, "Humidity: %.2f %%", data.humidity);
-                ESP_LOGI(TAG, "Gas Resistance: %.2f KOhms", data.gas_resistance / 1000.0);
-            } else {
-                ESP_LOGW(TAG, "No data or error reading BME68x: %d", rslt);
-            }
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
+    bool read_measurement() {
+        if (!ok) return false;
+        int8_t rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &dev);
+        if (rslt != BME68X_OK) {
+            ESP_LOGE(TAG, "bme68x_set_op_mode failed: %d", rslt);
+            return false;
+        }
+        uint32_t del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &dev) / 1000 + heatr_conf.heatr_dur;
+        vTaskDelay(del_period / portTICK_PERIOD_MS + 1);
+        struct bme68x_data data;
+        uint8_t n_fields;
+        rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &dev);
+        if (rslt == BME68X_OK && n_fields > 0) {
+            int64_t now = esp_timer_get_time() / 1000; // ms
+            ESP_LOGI(TAG, "Timestamp: %lld ms", now);
+            ESP_LOGI(TAG, "Temperature: %.2f°C", data.temperature);
+            ESP_LOGI(TAG, "Pressure: %.2f hPa", data.pressure / 100.0f);
+            ESP_LOGI(TAG, "Humidity: %.2f %%", data.humidity);
+            ESP_LOGI(TAG, "Gas Resistance: %.2f KOhms", data.gas_resistance / 1000.0);
+            return true;
+        } else {
+            ESP_LOGW(TAG, "No data or error reading BME68x: %d", rslt);
+            return false;
         }
     }
 
@@ -136,9 +137,10 @@ private:
 };
 
 
-using namespace bme;
-
 extern "C" void app_main() {
     BME688 sensor;
-    sensor.loop();
+    while (true) {
+        sensor.read_measurement();
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
 }

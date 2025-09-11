@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "E:/dev/ESP32/my_Projects/hc05_bluetooth",
+    "cmake.sourceDirectory": "D:/baris/personal/personal_projects/ESP32/my_projects/button_LED",
     "files.associations": {
         "array": "cpp",
         "chrono": "cpp",
@@ -79,6 +79,10 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "esp_sntp.h": "c",
+        "string.h": "c",
+        "freertos.h": "c",
+        "lwipopts.h": "c"
     }
 }
