@@ -4,7 +4,6 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 
-
 extern "C" void app_main() {
     // No SNTP or real-time clock initialization
     static int i = 10;
