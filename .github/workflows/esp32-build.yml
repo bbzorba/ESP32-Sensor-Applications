@@ -9,16 +9,16 @@ on:
 
 env:
   #Paths for Work PC
-  IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
-  IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
-  PROJECT_DIR: button_LED
-  SERIAL_PORT: COM3
+  #IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
+  #IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
+  #PROJECT_DIR: button_LED
+  #SERIAL_PORT: COM3
 
   #paths for Home PC
-  #IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
-  #IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
-  #PROJECT_DIR: button_LED
-  #SERIAL_PORT: COM7
+  IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
+  IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
+  PROJECT_DIR: button_LED
+  SERIAL_PORT: COM7
 
   # Paths for MacOS
   #IDF_PATH: /Users/basakisilzorba/esp/esp-idf
