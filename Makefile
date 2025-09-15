@@ -21,7 +21,7 @@ endif
 #IDF_PYTHON      := $(if $(IDF_PYTHON),$(IDF_PYTHON),C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe)
 
 #Paths for Home PC
-PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),E:/dev/ESP32/my_Projects/lora_communication)
+PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),E:/dev/ESP32/my_Projects/servo_motor)
 IDF_PATH        := $(if $(IDF_PATH),$(IDF_PATH),C:/Users/Xigmatek/esp/esp-idf)
 IDF_PYTHON      := $(if $(IDF_PYTHON),$(IDF_PYTHON),C:/Users/Xigmatek/.espressif/python_env/idf4.2_py3.8_env/Scripts/python.exe)
 
