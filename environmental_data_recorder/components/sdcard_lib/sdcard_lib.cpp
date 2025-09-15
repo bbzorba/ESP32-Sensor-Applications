@@ -41,23 +41,15 @@ esp_err_t SDCard::init() {
     gpio_set_pull_mode(static_cast<gpio_num_t>(pin_sclk), GPIO_PULLUP_ONLY);
     gpio_set_pull_mode(static_cast<gpio_num_t>(pin_cs), GPIO_PULLUP_ONLY);
 
-    spi_bus_config_t bus_cfg = {
-        .mosi_io_num = pin_mosi,
-        .miso_io_num = pin_miso,
-        .sclk_io_num = pin_sclk,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .data4_io_num = -1,
-        .data5_io_num = -1,
-        .data6_io_num = -1,
-        .data7_io_num = -1,
-        .data_io_default_level = 0,
-        .max_transfer_sz = 4000,
-        .flags = 0,
-        .intr_flags = 0,
-    };
+    spi_bus_config_t bus_cfg = {};
+    bus_cfg.mosi_io_num = pin_mosi;
+    bus_cfg.miso_io_num = pin_miso;
+    bus_cfg.sclk_io_num = pin_sclk;
+    bus_cfg.quadwp_io_num = -1;
+    bus_cfg.quadhd_io_num = -1;
+    bus_cfg.max_transfer_sz = 4000;
 
-    esp_err_t ret = spi_bus_initialize(host_id, &bus_cfg, SPI_DMA_CH_AUTO);
+    esp_err_t ret = spi_bus_initialize(host_id, &bus_cfg, host_id);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize SPI bus (%s).", esp_err_to_name(ret));
         return ret;
@@ -71,13 +63,10 @@ esp_err_t SDCard::init() {
     slot_config.gpio_cs = static_cast<gpio_num_t>(pin_cs);
     slot_config.host_id = (spi_host_device_t)host.slot;
 
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-        .format_if_mount_failed = false,
-        .max_files = 5,
-        .allocation_unit_size = 0, // Use default for best compatibility
-        .disk_status_check_enable = 0,
-        .use_one_fat = 0
-    };
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {};
+    mount_config.format_if_mount_failed = false;
+    mount_config.max_files = 5;
+    mount_config.allocation_unit_size = 0;
 
     ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
 

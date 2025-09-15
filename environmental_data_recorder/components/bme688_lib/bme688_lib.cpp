@@ -1,8 +1,8 @@
 #include "bme688_lib.h"
-
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp32/rom/ets_sys.h"
 
 // Define a local tag for logging purposes within this source file.
 static const char *TAG = "BME688_LIB";
@@ -17,7 +17,6 @@ BME688::BME688() {
     i2c_conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
     i2c_conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
     i2c_conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-    i2c_conf.clk_flags = 0;
     i2c_param_config(I2C_MASTER_NUM, &i2c_conf);
     i2c_driver_install(I2C_MASTER_NUM, i2c_conf.mode, 0, 0, 0);
 
@@ -145,5 +144,5 @@ int8_t BME688::bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint3
 
 // Static member function for microsecond delays, required by the Bosch sensor API.
 void BME688::bme68x_delay_us(uint32_t period, void *intf_ptr) {
-    esp_rom_delay_us(period);
+    ets_delay_us(period);
 }

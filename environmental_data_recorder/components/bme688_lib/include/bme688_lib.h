@@ -8,7 +8,6 @@
 // ESP-IDF specific headers
 #include "esp_log.h"
 #include "driver/i2c.h"
-#include "esp_rom_sys.h"
 #include "esp_timer.h"
 
 // FreeRTOS header for vTaskDelay
