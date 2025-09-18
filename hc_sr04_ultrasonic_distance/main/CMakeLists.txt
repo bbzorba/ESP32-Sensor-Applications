@@ -1,2 +1,2 @@
-idf_component_register(SRCS "mcpwm_capture_hc_sr04.c"
+idf_component_register(SRCS "hc_sr04_distance_measurement.cpp"
                     INCLUDE_DIRS ".")
