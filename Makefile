@@ -16,7 +16,7 @@ SHELL := /bin/bash
 endif
 
 #Paths for Work PC
-PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),D:/baris/personal/personal_projects/ESP32/my_projects/hc_sr04_ultrasonic_distance)
+PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),D:/baris/personal/personal_projects/ESP32/my_projects/builtin_touch_sensor)
 IDF_PATH        := $(if $(IDF_PATH),$(IDF_PATH),C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf)
 IDF_PYTHON      := $(if $(IDF_PYTHON),$(IDF_PYTHON),C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe)
 

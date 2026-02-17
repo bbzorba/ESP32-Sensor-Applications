@@ -84,5 +84,6 @@
         "string.h": "c",
         "freertos.h": "c",
         "lwipopts.h": "c"
-    }
+    },
+    "idf.currentSetup": "C:\\Users\\bzorba.B1-ES\\esp\\v5.4.2\\esp-idf"
 }
