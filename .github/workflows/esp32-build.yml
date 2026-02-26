@@ -29,21 +29,21 @@ jobs:
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Clean (via Makefile)
-        env:
-          CCACHE_DISABLE: "1"
-        run: |
-          echo Cleaning build (Makefile may call idf.py in PROJECT_DIR)
-          make clean
-        shell: cmd
-
       - name: Build (via Makefile)
         env:
           CCACHE_DISABLE: "1"
         run: |
-          echo Building project using Makefile
-          make build
+          echo Building project using Makefile (incremental; do NOT run make clean)
+          make build PROJECT_DIR=%GITHUB_WORKSPACE%
         shell: cmd
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32_build
+          path: |
+            build/**
+          if-no-files-found: error
 
   flash-local:
     runs-on: [self-hosted, windows]
@@ -58,6 +58,13 @@ jobs:
           name: esp32_build
           path: build_artifacts
 
+      - name: Prepare build directory (copy artifact into workspace)
+        run: |
+          if exist build rmdir /s /q build
+          mkdir build
+          xcopy build_artifacts\build\* build\ /E /I /Y > NUL
+        shell: cmd
+
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
@@ -68,7 +75,7 @@ jobs:
           CCACHE_DISABLE: "1"
         run: |
           echo Flashing project using Makefile (Makefile will use PROJECT_DIR)
-          make flash PORT=%SERIAL_PORT%
+          make flash PROJECT_DIR=%GITHUB_WORKSPACE% PORT=%SERIAL_PORT%
         shell: cmd
 
   verify-local:
@@ -84,6 +91,13 @@ jobs:
           name: esp32_build
           path: build_artifacts
 
+      - name: Prepare build directory (copy artifact into workspace)
+        run: |
+          if exist build rmdir /s /q build
+          mkdir build
+          xcopy build_artifacts\build\* build\ /E /I /Y > NUL
+        shell: cmd
+
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
@@ -94,7 +108,7 @@ jobs:
           CCACHE_DISABLE: "1"
         run: |
           echo Starting monitor via Makefile for 10 seconds
-          start "" /b make monitor PORT=%SERIAL_PORT% > monitor_output.txt 2> monitor_error.txt
+          start "" /b make monitor PROJECT_DIR=%GITHUB_WORKSPACE% PORT=%SERIAL_PORT% > monitor_output.txt 2> monitor_error.txt
           timeout /t 10
           echo Stopping monitor...
           for /f "tokens=2" %%a in ('tasklist ^| findstr /i "idf.py"') do taskkill /pid %%a /f
