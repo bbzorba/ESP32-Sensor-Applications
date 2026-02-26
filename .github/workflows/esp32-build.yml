@@ -11,7 +11,7 @@ env:
   #Paths for Work PC
   IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
   IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
-  PROJECT_DIR: button_LED
+  PROJECT_DIR: touch_sensor_interrupt
   SERIAL_PORT: COM3
 
   #paths for Home PC
@@ -61,8 +61,8 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: ${{ env.PROJECT_DIR }}/build
 
   flash-local:
     runs-on: [self-hosted, windows]
@@ -74,8 +74,8 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: ${{ env.PROJECT_DIR }}/build
 
       - name: Disable ccache
         run: |
@@ -87,9 +87,15 @@ jobs:
           CCACHE_DISABLE: "1"
         run: |
           call "%IDF_PATH%\export.bat"
-          cd /d "%PROJECT_DIR%"
-          echo Flashing the project...
-          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% flash
+          echo Flashing the project (prefer using build/flash_args to avoid rebuild)...
+          if exist "%PROJECT_DIR%\build\flash_args" (
+            echo "Found flash_args; using esptool to flash without rebuilding"
+            "%IDF_PYTHON%" -m esptool --port %SERIAL_PORT% write_flash @"%PROJECT_DIR%\build\flash_args"
+          ) else (
+            echo "flash_args not found; falling back to idf.py flash (may rebuild)"
+            cd /d "%PROJECT_DIR%"
+            "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% flash
+          )
         shell: cmd
 
   verify-local:
@@ -102,8 +108,8 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: ${{ env.PROJECT_DIR }}/build
 
       - name: Disable ccache
         run: |
