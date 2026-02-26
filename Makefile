@@ -16,7 +16,7 @@ SHELL := /bin/bash
 endif
 
 #Paths for Work PC
-PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),D:/baris/personal/personal_projects/ESP32/my_projects/builtin_touch_sensor)
+PROJECT_DIR     := $(if $(PROJECT_DIR),$(PROJECT_DIR),D:/baris/personal/personal_projects/ESP32/my_projects/touch_sensor_interrupt)
 IDF_PATH        := $(if $(IDF_PATH),$(IDF_PATH),C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf)
 IDF_PYTHON      := $(if $(IDF_PYTHON),$(IDF_PYTHON),C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe)
 
@@ -39,7 +39,7 @@ PORT ?= COM3
 
 
 # Register targets that are not files.
-.PHONY: all build flash flash-auto flashmonitor flashmonitor-auto monitor monitor-auto menuconfig clean
+ .PHONY: all help build build-flash-monitor flash flash-auto flashmonitor flashmonitor-auto monitor monitor-auto menuconfig clean
 
 
 
@@ -55,11 +55,28 @@ endif
 
 
 # Default target
-all: build
+all: help
 
 # Each target calls the template and passes its specific idf.py command as an argument.
 build:
 	$(call IDF_CMD, build)
+
+# Show helpful usage when running `make` with no args
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  build                 : Build project"
+	@echo "  flash                 : Flash project to device (uses PORT var)"
+	@echo "  monitor               : Open serial monitor (uses PORT var)"
+	@echo "  flashmonitor          : Flash and then open monitor"
+	@echo "  flash-auto            : Auto-detect serial port and flash"
+	@echo "  monitor-auto          : Auto-detect serial port and monitor"
+	@echo "  flashmonitor-auto     : Auto-detect serial port, flash, and monitor"
+	@echo "  build-flash-monitor   : Build, then flash, then open monitor"
+	@echo "  menuconfig            : Run idf.py menuconfig"
+	@echo "  clean                 : Clean build files"
+	@echo ""
 
 menuconfig:
 	$(call IDF_CMD, menuconfig)
@@ -72,6 +89,11 @@ monitor:
 
 flashmonitor:
 	$(call IDF_CMD, -p $(PORT) flash monitor)
+
+build-flash-monitor:
+	$(call IDF_CMD, build)
+	$(call IDF_CMD, -p $(PORT) flash)
+	$(call IDF_CMD, -p $(PORT) monitor)
 
 ifeq ($(IS_WINDOWS),Windows_NT)
 # Auto-detect serial port on Windows and flash
