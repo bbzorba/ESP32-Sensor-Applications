@@ -8,19 +8,13 @@ on:
 
 
 env:
-  #Paths for Work PC
-  IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
-  IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
+  #Port for Work PC
   SERIAL_PORT: COM3
 
-  #paths for Home PC (example - runner may already have these set)
-  #IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
-  #IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
+  #Port for Home PC (example - runner may already have these set)
   #SERIAL_PORT: COM7
 
-  # Paths for MacOS
-  #IDF_PATH: /Users/basakisilzorba/esp/esp-idf
-  #IDF_PYTHON: /Users/basakisilzorba/required_idf_tools_path/python_env/idf5.5_py3.13_env/bin/python3
+  # Port for MacOS
   #SERIAL_PORT: /dev/cu.usbserial-0001
 
 jobs:
@@ -51,11 +45,19 @@ jobs:
           make build
         shell: cmd
 
+      - name: List found build folders (debug)
+        run: |
+          echo "Listing any build directories under the repo:"
+          for /d %%D in (.) do @echo %%~fD
+          dir /s /b | findstr /i "\\build"
+        shell: cmd
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: esp32_build
-          path: '**/build'
+          path: '**/build/**'
+          if-no-files-found: error
 
   flash-local:
     runs-on: [self-hosted, windows]
