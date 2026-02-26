@@ -45,16 +45,6 @@ jobs:
           make build
         shell: cmd
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: esp32_build
-          # Attempt to upload build folders inside the repo and also a sibling ../build
-          path: |
-            **/build/**
-            ../build/**
-          if-no-files-found: warn
-
   flash-local:
     runs-on: [self-hosted, windows]
     needs: build-local
