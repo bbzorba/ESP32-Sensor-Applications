@@ -47,17 +47,21 @@ jobs:
 
       - name: List found build folders (debug)
         run: |
-          echo "Listing any build directories under the repo:"
-          for /d %%D in (.) do @echo %%~fD
-          dir /s /b | findstr /i "\\build"
+          echo "Listing current working directory:"
+          cd
+          echo "Listing any build directories under the repo (non-fatal):"
+          dir /s /b | findstr /i "\\build" || echo "No build directories found"
         shell: cmd
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: esp32_build
-          path: '**/build/**'
-          if-no-files-found: error
+          # Attempt to upload build folders inside the repo and also a sibling ../build
+          path: |
+            **/build/**
+            ../build/**
+          if-no-files-found: warn
 
   flash-local:
     runs-on: [self-hosted, windows]
