@@ -8,13 +8,22 @@ on:
 
 
 env:
-  #Port for Work PC
+  #Paths for Work PC
+  IDF_PATH: C:/Users/bzorba.B1-ES/esp/v5.4.2/esp-idf
+  IDF_PYTHON: C:/Users/bzorba.B1-ES/.espressif/python_env/idf5.4_py3.13_env/Scripts/python.exe
+  PROJECT_DIR: button_LED
   SERIAL_PORT: COM3
 
-  #Port for Home PC (example - runner may already have these set)
+  #paths for Home PC
+  #IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
+  #IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
+  #PROJECT_DIR: button_LED
   #SERIAL_PORT: COM7
 
-  # Port for MacOS
+  # Paths for MacOS
+  #IDF_PATH: /Users/basakisilzorba/esp/esp-idf
+  #IDF_PYTHON: /Users/basakisilzorba/required_idf_tools_path/python_env/idf5.5_py3.13_env/bin/python3
+  #PROJECT_DIR: button_LED
   #SERIAL_PORT: /dev/cu.usbserial-0001
 
 jobs:
@@ -29,29 +38,31 @@ jobs:
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Build (via Makefile)
+      - name: Clean Build Directory
         env:
           CCACHE_DISABLE: "1"
         run: |
-          echo Building project using Makefile (incremental; do NOT run make clean)
-          make build PROJECT_DIR=%GITHUB_WORKSPACE%
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Cleaning build directory...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" fullclean
         shell: cmd
 
-      - name: List build folders (non-fatal)
+      - name: Setup ESP-IDF and Build Project
+        env:
+          CCACHE_DISABLE: "1"
         run: |
-          echo "Listing build folders under workspace (non-fatal):"
-          dir /s /b | findstr /i "\\build" || echo "No build directories found"
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Building the project...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" build
         shell: cmd
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: esp32_build
-          # upload any nested project build folders (e.g. touch_sensor_interrupt/build)
-          path: |
-            **/*/build/**
-            **/build/**
-          if-no-files-found: error
+          name: button_led_build
+          path: button_LED/build
 
   flash-local:
     runs-on: [self-hosted, windows]
@@ -63,27 +74,22 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: esp32_build
-          path: build_artifacts
-
-      - name: Prepare build directory (copy artifact into workspace)
-        run: |
-          if exist build rmdir /s /q build
-          mkdir build
-          xcopy build_artifacts\build\* build\ /E /I /Y > NUL
-        shell: cmd
+          name: button_led_build
+          path: button_LED/build
 
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Flash Project (via Makefile)
+      - name: Flash Project to ESP32
         env:
           CCACHE_DISABLE: "1"
         run: |
-          echo Flashing project using Makefile (Makefile will use PROJECT_DIR)
-          make flash PROJECT_DIR=%GITHUB_WORKSPACE% PORT=%SERIAL_PORT%
+          call "%IDF_PATH%\export.bat"
+          cd /d "%PROJECT_DIR%"
+          echo Flashing the project...
+          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% flash
         shell: cmd
 
   verify-local:
@@ -96,29 +102,23 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: esp32_build
-          path: build_artifacts
-
-      - name: Prepare build directory (copy artifact into workspace)
-        run: |
-          if exist build rmdir /s /q build
-          mkdir build
-          xcopy build_artifacts\build\* build\ /E /I /Y > NUL
-        shell: cmd
+          name: button_led_build
+          path: button_LED/build
 
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Verify Firmware on ESP32 (via Makefile monitor)
+      - name: Verify Firmware on ESP32
         env:
           CCACHE_DISABLE: "1"
         run: |
-          echo Starting monitor via Makefile for 10 seconds
-          start "" /b make monitor PROJECT_DIR=%GITHUB_WORKSPACE% PORT=%SERIAL_PORT% > monitor_output.txt 2> monitor_error.txt
+          cd /d "%PROJECT_DIR%"
+          echo Starting ESP32 monitor for 10 seconds...
+          start "" /b "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% monitor > monitor_output.txt 2> monitor_error.txt
           timeout /t 10
-          echo Stopping monitor...
+          echo Stopping ESP32 monitor...
           for /f "tokens=2" %%a in ('tasklist ^| findstr /i "idf.py"') do taskkill /pid %%a /f
           echo Monitor output:
           type monitor_output.txt
