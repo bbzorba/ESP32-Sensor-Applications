@@ -14,10 +14,9 @@ env:
   #PROJECT_DIR: button_LED
   #SERIAL_PORT: COM3
 
-  #paths for Home PC
+  #paths for Home PC (example - runner may already have these set)
   IDF_PATH: C:\Users\Xigmatek\esp\esp-idf
   IDF_PYTHON: C:\Users\Xigmatek\.espressif\python_env\idf4.2_py3.8_env\Scripts\python.exe
-  PROJECT_DIR: button_LED
   SERIAL_PORT: COM7
 
   # Paths for MacOS
@@ -38,31 +37,27 @@ jobs:
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Clean Build Directory
+      - name: Clean (via Makefile)
         env:
           CCACHE_DISABLE: "1"
         run: |
-          call "%IDF_PATH%\export.bat"
-          cd /d "%PROJECT_DIR%"
-          echo Cleaning build directory...
-          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" fullclean
+          echo Cleaning build (Makefile may call idf.py in PROJECT_DIR)
+          make clean
         shell: cmd
 
-      - name: Setup ESP-IDF and Build Project
+      - name: Build (via Makefile)
         env:
           CCACHE_DISABLE: "1"
         run: |
-          call "%IDF_PATH%\export.bat"
-          cd /d "%PROJECT_DIR%"
-          echo Building the project...
-          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" build
+          echo Building project using Makefile
+          make build
         shell: cmd
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: '**/build'
 
   flash-local:
     runs-on: [self-hosted, windows]
@@ -74,22 +69,20 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: build_artifacts
 
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Flash Project to ESP32
+      - name: Flash Project (via Makefile)
         env:
           CCACHE_DISABLE: "1"
         run: |
-          call "%IDF_PATH%\export.bat"
-          cd /d "%PROJECT_DIR%"
-          echo Flashing the project...
-          "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% flash
+          echo Flashing project using Makefile (Makefile will use PROJECT_DIR)
+          make flash PORT=%SERIAL_PORT%
         shell: cmd
 
   verify-local:
@@ -102,23 +95,22 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: button_led_build
-          path: button_LED/build
+          name: esp32_build
+          path: build_artifacts
 
       - name: Disable ccache
         run: |
           $env:CCACHE_DISABLE="1"
           [System.Environment]::SetEnvironmentVariable("CCACHE_DISABLE", "1", "Process")
 
-      - name: Verify Firmware on ESP32
+      - name: Verify Firmware on ESP32 (via Makefile monitor)
         env:
           CCACHE_DISABLE: "1"
         run: |
-          cd /d "%PROJECT_DIR%"
-          echo Starting ESP32 monitor for 10 seconds...
-          start "" /b "%IDF_PYTHON%" "%IDF_PATH%\tools\idf.py" -p %SERIAL_PORT% monitor > monitor_output.txt 2> monitor_error.txt
+          echo Starting monitor via Makefile for 10 seconds
+          start "" /b make monitor PORT=%SERIAL_PORT% > monitor_output.txt 2> monitor_error.txt
           timeout /t 10
-          echo Stopping ESP32 monitor...
+          echo Stopping monitor...
           for /f "tokens=2" %%a in ('tasklist ^| findstr /i "idf.py"') do taskkill /pid %%a /f
           echo Monitor output:
           type monitor_output.txt
