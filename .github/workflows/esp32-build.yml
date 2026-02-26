@@ -37,12 +37,20 @@ jobs:
           make build PROJECT_DIR=%GITHUB_WORKSPACE%
         shell: cmd
 
+      - name: List build folders (non-fatal)
+        run: |
+          echo "Listing build folders under workspace (non-fatal):"
+          dir /s /b | findstr /i "\\build" || echo "No build directories found"
+        shell: cmd
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: esp32_build
+          # upload any nested project build folders (e.g. touch_sensor_interrupt/build)
           path: |
-            build/**
+            **/*/build/**
+            **/build/**
           if-no-files-found: error
 
   flash-local:
